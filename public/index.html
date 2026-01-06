@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Sachin Panel (hackii)</title>
+
+<script>
+async function login(){
+ const uid = document.getElementById('uid').value;
+ const key = document.getElementById('key').value;
+
+ const r = await fetch('/validate',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body: JSON.stringify({uid,key})
+ });
+
+ if(r.status!==200){
+   alert('DENIED');
+   return;
+ }
+
+ const j = await r.json();
+ localStorage.token = j.token;
+ location.href='dashboard.html';
+}
+</script>
+
+<style>
+body{background:#111;color:#fff;font-family:Arial;text-align:center}
+.box{max-width:420px;margin:auto;padding:20px}
+input{width:90%;padding:12px;margin:8px}
+button{padding:12px 30px;font-size:16px}
+</style>
+
+</head>
+<body>
+<div class="box">
+<h2>LOGIN GATE</h2>
+<input id="uid" placeholder="UID"/>
+<input id="key" placeholder="KEY"/>
+<button onclick="login()">ENTER</button>
+</div>
+</body>
+</html>

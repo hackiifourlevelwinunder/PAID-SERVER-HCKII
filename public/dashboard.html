@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Sachin Panel (hackii)</title>
+
+<script>
+function gate(){
+ if(!localStorage.token){
+   location.href='index.html';
+ }
+}
+
+async function load(){
+ gate();
+ const r = await fetch('/result');
+ const j = await r.json();
+
+ document.getElementById('period').innerText = j.period;
+ document.getElementById('round').innerText = j.round;
+ document.getElementById('time').innerText = j.time;
+
+ const sec = new Date(j.time).getSeconds();
+
+ if(sec >=30 && sec <=45){
+   document.getElementById('preview').innerText = j.digit;
+ }
+
+ if(sec===59 || sec===0){
+   document.getElementById('final').innerText = j.digit;
+ }
+
+ document.getElementById('date').innerText =
+   new Date(j.time).toLocaleDateString();
+}
+
+setInterval(load,1000);
+</script>
+
+<style>
+body{background:#000;color:white;text-align:center;font-family:Arial}
+.strip{padding:10px;font-size:18px}
+.digit{font-size:72px;margin:10px}
+</style>
+
+</head>
+<body onload="load()">
+
+<div class="strip" id="date"></div>
+<div class="strip">PERIOD: <span id="period"></span></div>
+<div class="strip">ROUND: <span id="round"></span></div>
+<div class="strip">TIME: <span id="time"></span></div>
+
+<div class="digit" id="preview"></div>
+<div class="digit" id="final"></div>
+
+</body>
+</html>
