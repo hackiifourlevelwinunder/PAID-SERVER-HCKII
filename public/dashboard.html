@@ -1,58 +1,217 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sachin Panel (hackii)</title>
 
 <script>
+/* ---- LOGIN SECURITY GATE ---- */
 function gate(){
- if(!localStorage.token){
-   location.href='index.html';
- }
+  if(!localStorage.token){
+    document.body.innerHTML =
+      '<div style="color:red;font-size:28px;margin-top:40%">ACCESS DENIED – LOGIN REQUIRED</div>';
+    throw new Error("DENIED");
+  }
 }
 
+/* ---- IST TIME ---- */
+function getIST(){
+  return new Date(Date.now() + (330*60*1000));
+}
+
+/* ---- ROUND INDEX FROM 5:30 AM RESET ---- */
+function roundIndex(){
+  const ist = getIST();
+  const reset = new Date(ist);
+  reset.setHours(5,30,0,0);
+
+  if(ist < reset){
+    reset.setDate(reset.getDate()-1);
+  }
+
+  return Math.floor((ist - reset)/60000);
+}
+
+/* ---- PERIOD CREATE YYYYMMDD10001 +1 ---- */
+function period(){
+  const d = getIST();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+
+  return y + m + day + "10001";
+}
+
+/* ---- SIMPLE PRNG 0–9 (DETERMINISTIC) ---- */
+function prng(){
+  const seed = period() + roundIndex();
+  let h = 0;
+  for(let i=0;i<seed.length;i++){
+    h += seed.charCodeAt(i);
+  }
+  const r = Math.sin(h) * 10000;
+  return Math.floor((r - Math.floor(r))*10);
+}
+
+/* ---- PROFESSIONAL UI UPDATE ---- */
 async function load(){
- gate();
- const r = await fetch('/result');
- const j = await r.json();
+  gate();
 
- document.getElementById('period').innerText = j.period;
- document.getElementById('round').innerText = j.round;
- document.getElementById('time').innerText = j.time;
+  const ist = getIST();
+  const round = roundIndex();
+  const digit = prng();
 
- const sec = new Date(j.time).getSeconds();
+  /* elements */
+  document.getElementById("clock").innerText =
+      ist.toLocaleTimeString();
 
- if(sec >=30 && sec <=45){
-   document.getElementById('preview').innerText = j.digit;
- }
+  document.getElementById("date").innerText =
+      ist.toLocaleDateString();
 
- if(sec===59 || sec===0){
-   document.getElementById('final').innerText = j.digit;
- }
+  document.getElementById("period").innerText =
+      period();
 
- document.getElementById('date').innerText =
-   new Date(j.time).toLocaleDateString();
+  document.getElementById("round").innerText =
+      round;
+
+  /* countdown wall clock */
+  const sec = ist.getSeconds();
+  const cd = 60 - sec;
+  document.getElementById("countdown").innerText = cd;
+
+  /* preview 30s–45s */
+  if(sec >=30 && sec <=45){
+    document.getElementById("preview").innerText = digit;
+  }else{
+    document.getElementById("preview").innerText = "–";
+  }
+
+  /* final exactly 59s or 00s */
+  if(sec===59 || sec===0){
+    document.getElementById("final").innerText = digit;
+
+    /* single history row only 1 */
+    document.getElementById("history").innerHTML =
+      "<tr><td>"+ round +"</td><td>"+ digit +"</td><td>"+ ist.toLocaleTimeString() +"</td></tr>";
+  }
 }
 
 setInterval(load,1000);
 </script>
 
 <style>
-body{background:#000;color:white;text-align:center;font-family:Arial}
-.strip{padding:10px;font-size:18px}
-.digit{font-size:72px;margin:10px}
+body{
+ margin:0;
+ background:#050505;
+ color:white;
+ font-family: Arial;
+}
+
+/* ---- HARD LEVEL DESIGN ---- */
+.top{
+ padding:12px;
+ text-align:center;
+ font-size:22px;
+ border-bottom:2px solid #0ff;
+}
+
+.flex{
+ display:flex;
+ justify-content:space-around;
+ margin-top:10px;
+}
+
+.card{
+ margin:10px;
+ padding:14px;
+ border:1px solid #0ff;
+ border-radius:10px;
+ box-shadow:0 0 20px #0ff;
+ text-align:center;
+}
+
+.big{
+ font-size:96px;
+ margin:6px;
+}
+
+table{
+ width:96%;
+ margin:auto;
+ margin-top:12px;
+ font-size:20px;
+ border:1px solid #0ff;
+}
+
+th,td{
+ padding:10px;
+ border-bottom:1px solid #0aa;
+}
+
+button.bigbtn{
+ padding:14px 40px;
+ font-size:24px;
+ margin:8px;
+ border:1px solid #0ff;
+ box-shadow:0 0 30px #0ff inset;
+}
 </style>
 
 </head>
+
 <body onload="load()">
 
-<div class="strip" id="date"></div>
-<div class="strip">PERIOD: <span id="period"></span></div>
-<div class="strip">ROUND: <span id="round"></span></div>
-<div class="strip">TIME: <span id="time"></span></div>
+<div class="top">
+<div id="clock"></div>
+<div id="date"></div>
+</div>
 
-<div class="digit" id="preview"></div>
-<div class="digit" id="final"></div>
+<div class="flex">
+
+<div class="card">
+<div>PERIOD</div>
+<div id="period"></div>
+</div>
+
+<div class="card">
+<div>ROUND</div>
+<div id="round"></div>
+</div>
+
+<div class="card">
+<div>COUNTDOWN</div>
+<div id="countdown" class="big"></div>
+</div>
+
+</div>
+
+<div class="card">
+<div>30s PREVIEW</div>
+<div id="preview" class="big"></div>
+</div>
+
+<div class="card">
+<div>FINAL DIGIT 59s</div>
+<div id="final" class="big"></div>
+</div>
+
+<div class="card">
+<div>TOWN HALL LOGIC</div>
+<div id="countdown" class="big"></div>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Single History</th>
+<th>Digit</th>
+<th>Time</th>
+</tr>
+</thead>
+
+<tbody id="history"></tbody>
+</table>
 
 </body>
-</html>
+ </html>
